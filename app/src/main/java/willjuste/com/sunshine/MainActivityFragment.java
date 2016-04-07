@@ -1,5 +1,6 @@
 package willjuste.com.sunshine;
 
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -57,7 +58,7 @@ public class MainActivityFragment extends Fragment {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
             GetWeatherTask weatherTask = new GetWeatherTask();
-            weatherTask.execute();
+            weatherTask.execute("78748");
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -66,7 +67,6 @@ public class MainActivityFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-
 
         String[] forecastArray = {
                 "Mon 6/23 - Sunny - 31/17",
@@ -98,12 +98,17 @@ public class MainActivityFragment extends Fragment {
         return rootView;
     }
 
-    public class GetWeatherTask extends AsyncTask {
+    public class GetWeatherTask extends AsyncTask<String, Void, Void> {
 
         private final String TAG = MainActivityFragment.class.getSimpleName();
 
         @Override
-        protected Object doInBackground(Object[] params) {
+        protected Void doInBackground(String... params) {
+
+            //Check to see if there is a zip code. Verify the size of the parameter.
+            if (params.length == 0){
+                return null;
+            }
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
             HttpURLConnection urlConnection = null;
@@ -111,14 +116,34 @@ public class MainActivityFragment extends Fragment {
 
             // Will contain the raw JSON response as a string.
             String forecastJsonStr = null;
+            String format = "json";
+            String units = "metric";
+            int dayNumbers = 7;
 
             try {
                 // Construct the URL for the OpenWeatherMap query
                 // Possible parameters are avaiable at OWM's forecast API page, at
                 // http://openweathermap.org/API#forecast
-                URL baseUrl = new URL("http://api.openweathermap.org/data/2.5/forecast/daily?q=78748&mode=json&units=metric&cnt=7");
-                String apiKey = "&APPID=" + OPEN_WEATHER_MAP_API_KEY;
-                URL url = new URL((baseUrl) + "." + apiKey);
+
+                final String FORECAST_BASE_URL =
+                        "http://api.openweathermap.org/data/2.5/forecast/daily?";
+                final String QUERY_PARAM = "q";
+                final String FORMAT_PARAM = "mode";
+                final String UNITS_PARAM = "units";
+                final String DAYS_PARAM = "cnt";
+                final String APPID_PARAM = "APPID";
+
+                Uri buildUri = Uri.parse(FORECAST_BASE_URL).buildUpon()
+                        .appendQueryParameter(QUERY_PARAM, params[0])
+                        .appendQueryParameter(FORMAT_PARAM, format)
+                        .appendQueryParameter(UNITS_PARAM, units)
+                        .appendQueryParameter(DAYS_PARAM, Integer.toString(dayNumbers))
+                        .appendQueryParameter(APPID_PARAM, OPEN_WEATHER_MAP_API_KEY)
+                        .build();
+
+                URL url = new URL(buildUri.toString());
+
+                Log.v(TAG, "Build URI" + buildUri.toString());
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -148,7 +173,7 @@ public class MainActivityFragment extends Fragment {
                 }
                 forecastJsonStr = buffer.toString();
 
-                Log.v(TAG, "Forecast String: " + forecastJsonStr);
+
             } catch (IOException e) {
                 Log.e(TAG, "Error ", e);
                 // If the code didn't successfully get the weather data, there's no point in attemping
@@ -166,7 +191,6 @@ public class MainActivityFragment extends Fragment {
                     }
                 }
             }
-
             return null;
 
         }
