@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.text.format.Time;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -14,12 +15,17 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -98,15 +104,107 @@ public class MainActivityFragment extends Fragment {
         return rootView;
     }
 
-    public class GetWeatherTask extends AsyncTask<String, Void, Void> {
+    public class GetWeatherTask extends AsyncTask<String, Void, String[]> {
 
         private final String TAG = MainActivityFragment.class.getSimpleName();
 
+        /* This date/time code will be moved outside the Async Task
+        but are just breaking down individual methods
+        */
+        private String parsedDateString(long time) {
+            //API returns a in unix timestamp measured in seconds
+            SimpleDateFormat dateFormat = new SimpleDateFormat("EEE MM dd");
+            return dateFormat.format(time);
+        }
+
+        // High/Low weathers
+
+        private String parsedTemperatures(double high, double low) {
+            long highTemperature = Math.round(high);
+            long lowTemperature = Math.round(low);
+
+            String highLowString = highTemperature + "/" + lowTemperature;
+            return highLowString;
+        }
+
+        /**
+         * Pull data from the Json String and parse it
+         **/
+
+        private String[] parseJsonData(String forecastJsonStr, int dayNumbers)
+                throws JSONException {
+
+            //JSON Objects that need to be parsed.
+            final String OWM_LIST = "list";
+            final String OWM_WEATHER = "weather";
+            final String OWM_TEMPERATURE = "temperature";
+            final String OWM_MAX = "max";
+            final String OWM_MIN = "min";
+            final String OWM_DESCRIPTION = "main";
+
+            JSONObject forecastJson = new JSONObject(forecastJsonStr);
+            JSONArray weatherArray = forecastJson.getJSONArray(OWM_LIST);
+
+            Time dayTime = new Time();
+            dayTime.setToNow();
+
+            //get the julian start day
+            int julianStartDay = Time.getJulianDay(System.currentTimeMillis(), dayTime.gmtoff);
+
+            //work with UTC
+            dayTime = new Time();
+
+
+            String[] resultStrs = new String[dayNumbers];
+            for (int i = 0; i < weatherArray.length(); i++) {
+                // For now, using the format "Day, description, hi/low"+
+
+                String day;
+                String description;
+                String highAndLow;
+
+                // Get the JSON object representing the day
+
+                JSONObject dayForecast = weatherArray.getJSONObject(i);
+
+                // The date/time is returned as a long.  We need to convert that
+                // into something human-readable, since most people won't read "1400356800" as
+                // "this saturday".
+
+                long dateTime;
+
+
+                // Cheating to convert this to UTC time, which is what we want anyhow
+                dateTime = dayTime.setJulianDay(julianStartDay + i);
+                day = parsedDateString(dateTime);
+
+                // description is in a child array called "weather", which is 1 element long.
+                JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
+                description = weatherObject.getString(OWM_DESCRIPTION);
+
+                // Temperatures are in a child object called "temp".  Try not to name variables
+                // "temp" when working with temperature.  It confuses everybody.
+
+
+                JSONObject temperatureObject = dayForecast.getJSONObject(OWM_TEMPERATURE);
+                double high = temperatureObject.getDouble(OWM_MAX);
+                double low = temperatureObject.getDouble(OWM_MIN);
+
+                highAndLow = parsedTemperatures(high, low);
+                resultStrs[i] = day + " - " + description + " - " + highAndLow;
+            }
+
+            for (String s : resultStrs) {
+                Log.v(TAG, "Forecast entry: " + s);
+            }
+            return resultStrs;
+        }
+
         @Override
-        protected Void doInBackground(String... params) {
+        protected String[] doInBackground(String... params) {
 
             //Check to see if there is a zip code. Verify the size of the parameter.
-            if (params.length == 0){
+            if (params.length == 0) {
                 return null;
             }
             // These two need to be declared outside the try/catch
@@ -115,6 +213,7 @@ public class MainActivityFragment extends Fragment {
             BufferedReader reader = null;
 
             // Will contain the raw JSON response as a string.
+
             String forecastJsonStr = null;
             String format = "json";
             String units = "metric";
@@ -171,11 +270,14 @@ public class MainActivityFragment extends Fragment {
                     // Stream was empty.  No point in parsing.
                     return null;
                 }
-                forecastJsonStr = buffer.toString();
 
+                forecastJsonStr = buffer.toString();
+                Log.v(TAG, "Forecast string: " + forecastJsonStr);
 
             } catch (IOException e) {
                 Log.e(TAG, "Error ", e);
+
+
                 // If the code didn't successfully get the weather data, there's no point in attemping
                 // to parse it.
                 return null;
@@ -189,12 +291,18 @@ public class MainActivityFragment extends Fragment {
                     } catch (final IOException e) {
                         Log.e(TAG, "Error closing stream", e);
                     }
+
+                    try {
+                        return parseJsonData(forecastJsonStr, dayNumbers);
+                    } catch (JSONException e) {
+                        Log.e(TAG, e.getMessage(), e);
+                        e.printStackTrace();
+                    }
                 }
             }
+            //Will happen if there is an error getting or parsing the data
             return null;
-
         }
     }
-
 }
 
