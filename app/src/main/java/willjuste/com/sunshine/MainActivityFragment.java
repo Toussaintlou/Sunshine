@@ -137,7 +137,7 @@ public class MainActivityFragment extends Fragment {
             //JSON Objects that need to be parsed.
             final String OWM_LIST = "list";
             final String OWM_WEATHER = "weather";
-            final String OWM_TEMPERATURE = "temperature";
+            final String OWM_TEMPERATURE = "temp";
             final String OWM_MAX = "max";
             final String OWM_MIN = "min";
             final String OWM_DESCRIPTION = "main";
@@ -157,7 +157,7 @@ public class MainActivityFragment extends Fragment {
 
             String[] resultStrs = new String[dayNumbers];
             for (int i = 0; i < weatherArray.length(); i++) {
-                // For now, using the format "Day, description, hi/low"+
+                // Using the format "Day, description, hi/low"+
 
                 String day;
                 String description;
@@ -172,9 +172,6 @@ public class MainActivityFragment extends Fragment {
                 // "this saturday".
 
                 long dateTime;
-
-
-                // Cheating to convert this to UTC time, which is what we want anyhow
                 dateTime = dayTime.setJulianDay(julianStartDay + i);
                 day = parsedDateString(dateTime);
 
@@ -195,7 +192,7 @@ public class MainActivityFragment extends Fragment {
             }
 
             for (String s : resultStrs) {
-                Log.v(TAG, "Forecast entry: " + s);
+//                Log.v(TAG, "Forecast entry: " + s);
             }
             return resultStrs;
         }
@@ -242,7 +239,8 @@ public class MainActivityFragment extends Fragment {
 
                 URL url = new URL(buildUri.toString());
 
-                Log.v(TAG, "Build URI" + buildUri.toString());
+//                Log.v(TAG, "Build URI " + buildUri.toString());
+
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -272,7 +270,8 @@ public class MainActivityFragment extends Fragment {
                 }
 
                 forecastJsonStr = buffer.toString();
-                Log.v(TAG, "Forecast string: " + forecastJsonStr);
+//                Log.v(TAG, "Forecast string: " + forecastJsonStr);
+
 
             } catch (IOException e) {
                 Log.e(TAG, "Error ", e);
@@ -294,6 +293,7 @@ public class MainActivityFragment extends Fragment {
 
                     try {
                         return parseJsonData(forecastJsonStr, dayNumbers);
+
                     } catch (JSONException e) {
                         Log.e(TAG, e.getMessage(), e);
                         e.printStackTrace();
@@ -302,6 +302,17 @@ public class MainActivityFragment extends Fragment {
             }
             //Will happen if there is an error getting or parsing the data
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(String[] feedToUi) {
+            if (feedToUi != null) {
+                mForecastAdapter.clear();
+                for (String dailyForecastStr : feedToUi) {
+                    mForecastAdapter.add(dailyForecastStr);
+                }
+            }
+            super.onPostExecute(feedToUi);
         }
     }
 }
