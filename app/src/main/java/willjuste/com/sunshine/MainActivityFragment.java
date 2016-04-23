@@ -1,5 +1,6 @@
 package willjuste.com.sunshine;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,6 +13,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -99,7 +101,16 @@ public class MainActivityFragment extends Fragment {
 
         ListView listView = (ListView) rootView.findViewById(R.id.listview_forecast);
         listView.setAdapter(mForecastAdapter);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                String forecast = mForecastAdapter.getItem(position);
+                Intent detailedActivity = new Intent(getActivity(), DetailedActivity.class);
+                detailedActivity.putExtra(Intent.EXTRA_TEXT, forecast);
+                startActivity(detailedActivity);
 
+            }
+        });
 
         return rootView;
     }
@@ -192,7 +203,6 @@ public class MainActivityFragment extends Fragment {
             }
 
             for (String s : resultStrs) {
-//                Log.v(TAG, "Forecast entry: " + s);
             }
             return resultStrs;
         }
@@ -239,8 +249,6 @@ public class MainActivityFragment extends Fragment {
 
                 URL url = new URL(buildUri.toString());
 
-//                Log.v(TAG, "Build URI " + buildUri.toString());
-
 
                 // Create the request to OpenWeatherMap, and open the connection
                 urlConnection = (HttpURLConnection) url.openConnection();
@@ -270,7 +278,6 @@ public class MainActivityFragment extends Fragment {
                 }
 
                 forecastJsonStr = buffer.toString();
-//                Log.v(TAG, "Forecast string: " + forecastJsonStr);
 
 
             } catch (IOException e) {
@@ -300,7 +307,7 @@ public class MainActivityFragment extends Fragment {
                     }
                 }
             }
-            //Will happen if there is an error getting or parsing the data
+            //Will happen if there is an error getting or parsing the datagit pu
             return null;
         }
 
