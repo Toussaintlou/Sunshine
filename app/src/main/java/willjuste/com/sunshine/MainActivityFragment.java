@@ -1,9 +1,11 @@
 package willjuste.com.sunshine;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.format.Time;
 import android.util.Log;
@@ -66,7 +68,12 @@ public class MainActivityFragment extends Fragment {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
             GetWeatherTask weatherTask = new GetWeatherTask();
-            weatherTask.execute("78748");
+            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String location = preferences.getString(
+                    getString(R.string.pref_location_key),
+                    getString(R.string.pref_location_default));
+
+            weatherTask.execute(location);
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -77,13 +84,13 @@ public class MainActivityFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         String[] forecastArray = {
-                "Mon 6/23 - Sunny - 31/17",
-                "Tue 6/24 - Foggy - 21/8",
-                "Wed 6/25 - Cloudy - 22/17",
-                "Thurs 6/26 - Rainy - 18/11",
-                "Fri 6/27 - Foggy - 21/10",
-                "Sat 6/28 - TRAPPED IN WEATHERSTATION - 23/18",
-                "Sun 6/29 - Sunny - 20/7"
+                "Mon ",
+                "Tue ",
+                "Wed ",
+                "Thurs ",
+                "Fri ",
+                "Sat",
+                "Sun"
         };
 
         List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecastArray));
