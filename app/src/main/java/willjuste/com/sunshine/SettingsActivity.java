@@ -1,16 +1,37 @@
 package willjuste.com.sunshine;
 
 import android.os.Bundle;
+import android.preference.ListPreference;
+import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 
-public class SettingsActivity extends PreferenceActivity {
+public class SettingsActivity extends PreferenceActivity implements Preference.OnPreferenceChangeListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 //        setContentView(R.layout.activity_settings);
+
+        //Add some preferences that are defined by the XML file
+        addPreferencesFromResource(R.xml.pref_general);
+
+        //Attach an OnPreferenceChangeListenerso the UI summary can update when the preference changes.
+
+        bindPreference(findPreference(getString(R.string.pref_location_key)));
+    }
+
+    private void bindPreference(Preference preference) {
+        //Watch for value changes in the listener
+        preference.setOnPreferenceChangeListener(this);
+
+//The value of the preference
+
+        onPreferenceChange(preference, PreferenceManager
+                .getDefaultSharedPreferences(preference.getContext())
+                .getString(preference.getKey(), ""));
     }
 
 
@@ -34,6 +55,24 @@ public class SettingsActivity extends PreferenceActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onPreferenceChange(Preference preference, Object newValue) {
+        String stringValue = newValue.toString();
+
+        if (preference instanceof ListPreference) {
+            //For list preferences, look up the correct display value int the 'entries'
+            ListPreference listPreference = (ListPreference) preference;
+            int preferenceIndex = listPreference.findIndexOfValue(stringValue);
+            if (preferenceIndex >=0){
+                preference.setSummary(listPreference.getEntries()[preferenceIndex]);
+            }
+        } else {
+            //For other preferences that aren't in a ListPreference
+            preference.setSummary(stringValue);
+        }
+        return true;
     }
 
 /**
