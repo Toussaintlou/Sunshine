@@ -31,8 +31,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -60,6 +58,11 @@ public class MainActivityFragment extends Fragment {
         inflater.inflate(R.menu.menu_mainactivity_fragment, menu);
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+    }
 
     //This will handle the items in the actionbar when they are clicked. Parent activity needs
     // to be specified in Android Manifest in order for back and home buttons to work.
@@ -67,33 +70,27 @@ public class MainActivityFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_refresh) {
-            GetWeatherTask weatherTask = new GetWeatherTask();
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String location = preferences.getString(
-                    getString(R.string.pref_location_key),
-                    getString(R.string.pref_location_default));
-
-            weatherTask.execute(location);
+            updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void updateWeather() {
+        GetWeatherTask weatherTask = new GetWeatherTask();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        String location = preferences.getString(
+                getString(R.string.pref_location_key),
+                getString(R.string.pref_location_default));
+
+        weatherTask.execute(location);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        String[] forecastArray = {
-                "Mon ",
-                "Tue ",
-                "Wed ",
-                "Thurs ",
-                "Fri ",
-                "Sat",
-                "Sun"
-        };
 
-        List<String> weekForecast = new ArrayList<String>(Arrays.asList(forecastArray));
         mForecastAdapter = new ArrayAdapter<String>(
                 //The current context (this fragments's parent activity)
                 getActivity(),
@@ -102,7 +99,7 @@ public class MainActivityFragment extends Fragment {
                 // ID of textview to populate
                 R.id.list_item_forecast_textview,
                 //Data
-                weekForecast);
+                new ArrayList<String>());
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
