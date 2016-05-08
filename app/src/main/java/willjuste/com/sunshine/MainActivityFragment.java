@@ -134,7 +134,15 @@ public class MainActivityFragment extends Fragment {
 
         // High/Low weathers
 
-        private String parsedTemperatures(double high, double low) {
+        private String formatHighLows(double high, double low, String unitType) {
+
+            if(unitType.equals(getString(R.string.pref_unit_temperature_imperial))){
+                high = (high * 1.8) + 32;
+                low = (low * 1.8) + 32;
+            } else if (!unitType.equals(getString(R.string.pref_unit_temperature_metric))){
+                Log.d(TAG, "Unit type not found: " + unitType);
+            }
+
             long highTemperature = Math.round(high);
             long lowTemperature = Math.round(low);
 
@@ -171,6 +179,15 @@ public class MainActivityFragment extends Fragment {
 
 
             String[] resultStrs = new String[dayNumbers];
+
+            //Since the data comes in Celsius - it is good to check / convert to correct units here
+
+            SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+            String unitType = sharedPreferences.getString(getString
+                    (R.string.pref_temperature_unit_key),
+                    getString(R.string.pref_unit_temperature_metric));
+
             for (int i = 0; i < weatherArray.length(); i++) {
                 // Using the format "Day, description, hi/low"+
 
@@ -202,7 +219,7 @@ public class MainActivityFragment extends Fragment {
                 double high = temperatureObject.getDouble(OWM_MAX);
                 double low = temperatureObject.getDouble(OWM_MIN);
 
-                highAndLow = parsedTemperatures(high, low);
+                highAndLow = formatHighLows(high, low, unitType);
                 resultStrs[i] = day + " - " + description + " - " + highAndLow;
             }
 
