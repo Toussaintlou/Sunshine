@@ -35,5 +35,6 @@
     <!-- Labels for Temperature Units preference values  -->
     <string name="pref_unit_temperature_label_imperial">Imperial</string>
     <string name="pref_unit_temperature_label_metric">Metric</string>
+    <string name="action_map">Map</string>
 
 </resources>

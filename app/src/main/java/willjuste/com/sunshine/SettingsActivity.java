@@ -75,6 +75,9 @@ public class SettingsActivity extends PreferenceActivity implements Preference.O
         return true;
     }
 
+
+
+
 /**
  * A placeholder fragment containing a simple view.
  */

@@ -343,5 +343,6 @@ public class MainActivityFragment extends Fragment {
             super.onPostExecute(feedToUi);
         }
     }
+
 }
 
